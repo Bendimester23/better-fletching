@@ -1,0 +1,16 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "FFF",
+        "FFF",
+        "FFF"
+    ],
+    "key": {
+        "F": {
+            "item": "betterarchery:tiny_flint"
+        }
+    },
+    "result": {
+        "item": "minecraft:flint"
+    }
+}
