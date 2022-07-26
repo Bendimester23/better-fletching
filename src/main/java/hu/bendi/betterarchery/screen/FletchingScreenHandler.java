@@ -110,6 +110,7 @@ public class FletchingScreenHandler extends ScreenHandler {
     @Override
     public void onSlotClick(int slotIndex, int button, SlotActionType actionType, PlayerEntity player) {
         super.onSlotClick(slotIndex, button, actionType, player);
+        if (slotIndex == 0 && actionType == SlotActionType.PICKUP) onCrafted();
         updateResult();
     }
 
@@ -117,11 +118,11 @@ public class FletchingScreenHandler extends ScreenHandler {
     public ItemStack transferSlot(PlayerEntity player, int index) {
         ItemStack itemStack = ItemStack.EMPTY;
         Slot slot = this.slots.get(index);
-        if (slot != null && slot.hasStack()) {
+        if (slot.hasStack()) {
             ItemStack itemStack2 = slot.getStack();
             itemStack = itemStack2.copy();
             if (index == 0) {
-                int maxAmount = Math.min(input.getStack(0).getCount(), Math.min(input.getStack(1).getCount(), input.getStack(2).getCount()));
+                int maxAmount = Math.min(Math.min(input.getStack(0).getCount(), Math.min(input.getStack(1).getCount(), input.getStack(2).getCount())), 16);
                 for (int i = 0; i < maxAmount; i++) {
                     this.onCrafted();
                 }

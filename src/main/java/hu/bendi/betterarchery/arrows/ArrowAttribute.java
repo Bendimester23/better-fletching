@@ -2,15 +2,17 @@ package hu.bendi.betterarchery.arrows;
 
 import net.minecraft.nbt.NbtCompound;
 
+//This can't be a record, because then Gson would fail
+@SuppressWarnings("ClassCanBeRecord")
 public class ArrowAttribute {
     public static final ArrowAttribute DEFAULT = new ArrowAttribute(0, 1, 1);
     private final float damage;
     private final float speed;
     private final float accuracy;
 
-    private ArrowAttribute(float damage, float speedMultipler, float accuracy) {
+    private ArrowAttribute(float damage, float speed, float accuracy) {
         this.damage = damage;
-        this.speed = speedMultipler;
+        this.speed = speed;
         this.accuracy = accuracy;
     }
 
@@ -20,9 +22,9 @@ public class ArrowAttribute {
 
     public static ArrowAttribute fromNbt(NbtCompound tag) {
         float damage = tag.getFloat("Damage");
-        float speedMultipler = tag.getFloat("Speed");
+        float speed = tag.getFloat("Speed");
         float accuracy = tag.getFloat("Accuracy");
-        return new ArrowAttribute(damage, speedMultipler, accuracy);
+        return new ArrowAttribute(damage, speed, accuracy);
     }
 
     public float getAccuracy() {
@@ -60,8 +62,8 @@ public class ArrowAttribute {
             return this;
         }
 
-        public Builder setSpeed(float speedMultipler) {
-            this.speed = speedMultipler;
+        public Builder setSpeed(float speed) {
+            this.speed = speed;
             return this;
         }
 
@@ -71,7 +73,7 @@ public class ArrowAttribute {
         }
 
         public Builder appendAttributes(ArrowAttribute attribute) {
-            //Avarge every value
+            //Average every value
             this.damage += attribute.damage;
             this.accuracy += attribute.accuracy;
             if (this.accuracy > 1) this.accuracy = 1;

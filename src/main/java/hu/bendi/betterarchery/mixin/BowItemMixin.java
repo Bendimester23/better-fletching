@@ -17,6 +17,8 @@ import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
+import java.util.Objects;
+
 @Mixin(BowItem.class)
 public abstract class BowItemMixin extends RangedWeaponItem {
 
@@ -32,21 +34,20 @@ public abstract class BowItemMixin extends RangedWeaponItem {
     */
    @Overwrite
    public void onStoppedUsing(ItemStack stack, World world, LivingEntity user, int remainingUseTicks) {
-      if (user instanceof PlayerEntity) {
-         PlayerEntity playerEntity = (PlayerEntity) user;
+      if (user instanceof PlayerEntity playerEntity) {
          boolean bl = playerEntity.getAbilities().creativeMode || EnchantmentHelper.getLevel(Enchantments.INFINITY, stack) > 0;
          ItemStack itemStack = playerEntity.getArrowType(stack);
          if (!itemStack.isEmpty() || bl) {
             if (itemStack.isEmpty()) {
                itemStack = new ItemStack(Items.ARROW);
             }
-  
-              int i = this.getMaxUseTime(stack) - remainingUseTicks;
-              float f = BowItem.getPullProgress(i);
-              if (!((double)f < 0.1D)) {
+
+            int i = this.getMaxUseTime(stack) - remainingUseTicks;
+            float f = BowItem.getPullProgress(i);
+            if (!((double) f < 0.1D)) {
                  boolean bl2 = bl && itemStack.isOf(Items.ARROW);
                  if (!world.isClient) {
-                    ArrowAttribute attribute = itemStack.getSubNbt("ArrowData") != null ? ArrowAttribute.fromNbt(itemStack.getSubNbt("ArrowData")) : ArrowAttribute.DEFAULT;
+                    ArrowAttribute attribute = itemStack.getSubNbt("ArrowData") != null ? ArrowAttribute.fromNbt(Objects.requireNonNull(itemStack.getSubNbt("ArrowData"))) : ArrowAttribute.DEFAULT;
 
                     ArrowItem arrowItem = (ArrowItem) (itemStack.getItem() instanceof ArrowItem ? itemStack.getItem() : Items.ARROW);
                     PersistentProjectileEntity persistentProjectileEntity = arrowItem.createArrow(world, itemStack, playerEntity);
@@ -56,7 +57,7 @@ public abstract class BowItemMixin extends RangedWeaponItem {
                        ((StatsHolder) persistentProjectileEntity).setStats(attribute);
 
                        if (itemStack.getSubNbt("Parts") != null) {
-                          ((PartsHolder) persistentProjectileEntity).setParts(PartsHolder.Parts.fromNbt(itemStack.getSubNbt("Parts")));
+                          ((PartsHolder) persistentProjectileEntity).setParts(PartsHolder.Parts.fromNbt(Objects.requireNonNull(itemStack.getSubNbt("Parts"))));
                        }
                     }
 
@@ -81,10 +82,8 @@ public abstract class BowItemMixin extends RangedWeaponItem {
                     if (EnchantmentHelper.getLevel(Enchantments.FLAME, stack) > 0) {
                        persistentProjectileEntity.setOnFireFor(100);
                     }
-  
-                    stack.damage(1, playerEntity, (p) -> {
-                       p.sendToolBreakStatus(playerEntity.getActiveHand());
-                    });
+
+                    stack.damage(1, playerEntity, (p) -> p.sendToolBreakStatus(playerEntity.getActiveHand()));
                     if (bl2 || playerEntity.getAbilities().creativeMode && (itemStack.isOf(Items.SPECTRAL_ARROW) || itemStack.isOf(Items.TIPPED_ARROW))) {
                        persistentProjectileEntity.pickupType = PickupPermission.CREATIVE_ONLY;
                     }
