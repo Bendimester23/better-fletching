@@ -1,59 +1,60 @@
 package hu.bendi.betterarchery.arrows;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import hu.bendi.betterarchery.ArcheryMod;
+import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
+import net.minecraft.item.Item;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
+
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import hu.bendi.betterarchery.ArcheryMod;
-import hu.bendi.betterarchery.item.ModItems;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-
-public class ArrowMaterialRegistry {
-    private static final Map<Item, ArrowAttribute> HEAD_MATERIALS = new HashMap<>();
-    private static final Map<Item, ArrowAttribute> BODY_MATERIALS = new HashMap<>();
-    private static final Map<Item, ArrowAttribute> TAIL_MATERIALS = new HashMap<>();
-
-    private static boolean init;
-
-    public static void registerHeadMaterial(Item item, ArrowAttribute attribute) {
-        HEAD_MATERIALS.put(item, attribute);
-    }
-
-    public static void registerBodyMaterial(Item item, ArrowAttribute attribute) {
-        BODY_MATERIALS.put(item, attribute);
-    }
-
-    public static void registerTailMaterial(Item item, ArrowAttribute attribute) {
-        TAIL_MATERIALS.put(item, attribute);
-    }
-
-    public static void registerDefaultMaterials() {
-        if (init) throw new IllegalStateException("Allready registered");
-        init = true;
-
-        ArcheryMod.LOGGER.info("Registering default arrow materials.");
-        //Heads
-        registerHeadMaterial(Items.FLINT, ArrowAttribute.Builder.create().setDamage(1).build());
-        registerHeadMaterial(ModItems.TINY_FLINT, ArrowAttribute.Builder.create().setDamage(3).setSpeedMultiplier(3).build());
-        registerHeadMaterial(Items.COBBLESTONE, ArrowAttribute.Builder.create().setDamage(20).setSpeedMultiplier(.2f).build());
-
-        //Bodies
-        registerBodyMaterial(Items.STICK, ArrowAttribute.Builder.create().setDamage(.2f).build());
-
-        //Tails
-        registerTailMaterial(Items.FEATHER, ArrowAttribute.Builder.create().setDamage(0).build());
-        registerTailMaterial(Items.TORCH, ArrowAttribute.Builder.create().setDamage(0).setAccuracy(0).build());
-    }
+public class ArrowMaterialRegistry implements SimpleSynchronousResourceReloadListener {
+    private static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().disableHtmlEscaping().create();
+    private static Map<ArrowMaterial.Part, Map<Item, ArrowAttribute>> materials;
 
     public static ArrowAttribute getHeadMaterial(Item item) {
-        return HEAD_MATERIALS.get(item);
+        return materials.get(ArrowMaterial.Part.HEAD).get(item);
     }
 
     public static ArrowAttribute getBodyMaterial(Item item) {
-        return BODY_MATERIALS.get(item);
+        return materials.get(ArrowMaterial.Part.BODY).get(item);
     }
 
     public static ArrowAttribute getTailMaterial(Item item) {
-        return TAIL_MATERIALS.get(item);
+        return materials.get(ArrowMaterial.Part.TAIL).get(item);
+    }
+
+    @Override
+    public Identifier getFabricId() {
+        return ArcheryMod.i("arrow_material");
+    }
+
+    @Override
+    public void reload(ResourceManager manager) {
+        var builder = new ImmutableMap.Builder<ArrowMaterial.Part, Map<Item, ArrowAttribute>>();
+        for (ArrowMaterial.Part part : ArrowMaterial.Part.values()) {
+            builder.put(part, new HashMap<>());
+        }
+        materials = builder.build();
+
+        for (Identifier id : manager.findResources("arrow_materials", path -> path.endsWith(".json"))) {
+            try (InputStream stream = manager.getResource(id).getInputStream()) {
+                var material = GSON.fromJson(new String(stream.readAllBytes()), ArrowMaterial.class);
+                materials.get(material.getPart()).put(Registry.ITEM.get(Identifier.tryParse(material.getItem())), material.getAttributes());
+            } catch (Exception e) {
+                ArcheryMod.LOGGER.error("Error occurred while loading resource json " + id, e);
+            }
+        }
+        AtomicInteger count = new AtomicInteger();
+        materials.forEach((part, itemArrowAttributeMap) -> itemArrowAttributeMap.forEach((item, attribute) -> count.incrementAndGet()));
+
+        ArcheryMod.LOGGER.info("Loaded {} arrow materials", count.get());
     }
 }

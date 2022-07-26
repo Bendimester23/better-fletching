@@ -1,0 +1,9 @@
+{
+  "part": "BODY",
+  "item": "minecraft:stick",
+  "attributes": {
+    "damage": 0.2,
+    "speed": 0.5,
+    "accuracy": 0.0
+  }
+}

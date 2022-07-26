@@ -1,0 +1,9 @@
+{
+  "part": "TAIL",
+  "item": "minecraft:feather",
+  "attributes": {
+    "damage": 0.0,
+    "speed": 0.1,
+    "accuracy": 0.3
+  }
+}

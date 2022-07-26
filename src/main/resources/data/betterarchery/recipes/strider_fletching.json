@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "  F",
+    "FFF",
+    "  F"
+  ],
+  "key": {
+    "F": {
+      "item": "betterarchery:strider_hair"
+    }
+  },
+  "result": {
+    "item": "betterarchery:strider_fletching"
+  }
+}

@@ -1,9 +1,10 @@
 package hu.bendi.betterarchery.client.gui;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-
 import hu.bendi.betterarchery.ArcheryMod;
 import hu.bendi.betterarchery.screen.FletchingScreenHandler;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.util.math.MatrixStack;
@@ -13,6 +14,7 @@ import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
+@Environment(EnvType.CLIENT)
 public class FletchingScreen extends HandledScreen<FletchingScreenHandler> {
     private static final Identifier TEXTURE = ArcheryMod.i("textures/gui/container/fletching_table.png");
 
@@ -43,7 +45,6 @@ public class FletchingScreen extends HandledScreen<FletchingScreenHandler> {
 
     @Override
     protected void onMouseClick(Slot slot, int slotId, int button, SlotActionType actionType) {
-        if (actionType == SlotActionType.SWAP) return;
         super.onMouseClick(slot, slotId, button, actionType);
     }
 }

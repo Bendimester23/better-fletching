@@ -1,8 +1,5 @@
 package hu.bendi.betterarchery.mixin;
 
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-
 import hu.bendi.betterarchery.ArcheryMod;
 import hu.bendi.betterarchery.screen.FletchingScreenHandler;
 import net.minecraft.block.BlockState;
@@ -20,17 +17,23 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
 
 @Mixin(FletchingTableBlock.class)
 public class FletchingTableBlockMixin {
 
     private static final Text TITLE = new TranslatableText("container.fletching_table");
 
+    /**
+     * @author Bendi
+     * @reason Open GUI on right click
+     */
     @Overwrite
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-        if (world.isClient) return ActionResult.PASS;
-        player.openHandledScreen(createScreenHanlerFactory(world, pos, (ServerPlayerEntity)player));
-        return ActionResult.SUCCESS;
+        if (world.isClient) return ActionResult.SUCCESS;
+        player.openHandledScreen(createScreenHanlerFactory(world, pos, (ServerPlayerEntity) player));
+        return ActionResult.CONSUME;
     }
 
     public NamedScreenHandlerFactory createScreenHanlerFactory(World world, BlockPos pos, ServerPlayerEntity serverPlayer) {

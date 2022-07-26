@@ -1,0 +1,9 @@
+{
+  "part": "HEAD",
+  "item": "minecraft:flint",
+  "attributes": {
+    "damage": 1.0,
+    "speed": 0.5,
+    "accuracy": 0.0
+  }
+}

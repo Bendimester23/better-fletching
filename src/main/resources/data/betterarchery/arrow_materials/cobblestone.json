@@ -1,0 +1,9 @@
+{
+  "part": "HEAD",
+  "item": "minecraft:cobblestone",
+  "attributes": {
+    "damage": 20.0,
+    "speed": -0.4,
+    "accuracy": -0.2
+  }
+}

@@ -12,6 +12,7 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerContext;
 import net.minecraft.screen.ScreenHandlerType;
@@ -21,12 +22,14 @@ import net.minecraft.server.network.ServerPlayerEntity;
 
 public class FletchingScreenHandler extends ScreenHandler {
     public SimpleInventory input = new SimpleInventory(3);
-    private CraftingResultInventory output = new CraftingResultInventory();
+    private final CraftingResultInventory output = new CraftingResultInventory();
     private final ServerPlayerEntity player;
+    private final ScreenHandlerContext context;
 
     protected FletchingScreenHandler(ScreenHandlerType<?> type, int syncId) {
         super(type, syncId);
         this.player = null;
+        this.context = null;
     }
 
     public FletchingScreenHandler(int syncId, PlayerInventory inventory) {
@@ -36,6 +39,14 @@ public class FletchingScreenHandler extends ScreenHandler {
     public FletchingScreenHandler(int syncId, PlayerInventory inventory, ScreenHandlerContext context, ServerPlayerEntity player) {
         super(ArcheryMod.FLETCHING_SCREEN_HANDLER, syncId);
         this.player = player;
+        //Output slot
+        this.addSlot(new FletchingOutputSlot(output, 0, 80, 45));
+
+        //Inputs
+        this.addSlot(new FletchingInputSlot(input, 0, 21, 25, FletchingInputSlot.ArrowPart.HEAD));
+        this.addSlot(new FletchingInputSlot(input, 1, 21, 46, FletchingInputSlot.ArrowPart.BODY));
+        this.addSlot(new FletchingInputSlot(input, 2, 21, 67, FletchingInputSlot.ArrowPart.TAIL));
+
         //Player inventory
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 9; ++j) {
@@ -46,12 +57,7 @@ public class FletchingScreenHandler extends ScreenHandler {
         for (int i = 0; i < 9; ++i) {
             this.addSlot(new Slot(inventory, i, 8 + i * 18, 164));
         }
-        //Inputs
-        this.addSlot(new FletchingInputSlot(input, 0, 21, 25, FletchingInputSlot.ArrowPart.HEAD));
-        this.addSlot(new FletchingInputSlot(input, 1, 21, 46, FletchingInputSlot.ArrowPart.BODY));
-        this.addSlot(new FletchingInputSlot(input, 2, 21, 67, FletchingInputSlot.ArrowPart.TAIL));
-        //Output slot
-        this.addSlot(new FletchingOutputSlot(output, 0, 80, 45, this::onCrafted));
+        this.context = context;
     }
 
     @Override
@@ -61,7 +67,7 @@ public class FletchingScreenHandler extends ScreenHandler {
 
     @Override
     public boolean canInsertIntoSlot(Slot slot) {
-        return slot.inventory == output;
+        return slot.inventory != output;
     }
 
     public void onCrafted() {
@@ -76,14 +82,22 @@ public class FletchingScreenHandler extends ScreenHandler {
             return;
         }
         var result = ArrowAttribute.Builder.create()
-            .appendAttributes(ArrowMaterialRegistry.getHeadMaterial(input.getStack(0).getItem()))
-            .appendAttributes(ArrowMaterialRegistry.getBodyMaterial(input.getStack(1).getItem()))
-            .appendAttributes(ArrowMaterialRegistry.getTailMaterial(input.getStack(2).getItem()))
-            .build();
+                .appendAttributes(ArrowMaterialRegistry.getHeadMaterial(input.getStack(0).getItem()))
+                .appendAttributes(ArrowMaterialRegistry.getBodyMaterial(input.getStack(1).getItem()))
+                .appendAttributes(ArrowMaterialRegistry.getTailMaterial(input.getStack(2).getItem()))
+                .build();
 
         var stack = new ItemStack(Items.ARROW);
 
         stack.setSubNbt("ArrowData", result.toNbt());
+        var tag = new NbtCompound();
+
+        tag.putString("Head", input.getStack(0).getTranslationKey());
+        tag.putString("Body", input.getStack(1).getTranslationKey());
+        tag.putString("Tail", input.getStack(2).getTranslationKey());
+        stack.setSubNbt("Parts", tag);
+
+        stack.setCount(4);
 
         setResult(stack);
     }
@@ -97,6 +111,58 @@ public class FletchingScreenHandler extends ScreenHandler {
     public void onSlotClick(int slotIndex, int button, SlotActionType actionType, PlayerEntity player) {
         super.onSlotClick(slotIndex, button, actionType, player);
         updateResult();
+    }
+
+    @Override
+    public ItemStack transferSlot(PlayerEntity player, int index) {
+        ItemStack itemStack = ItemStack.EMPTY;
+        Slot slot = this.slots.get(index);
+        if (slot != null && slot.hasStack()) {
+            ItemStack itemStack2 = slot.getStack();
+            itemStack = itemStack2.copy();
+            if (index == 0) {
+                int maxAmount = Math.min(input.getStack(0).getCount(), Math.min(input.getStack(1).getCount(), input.getStack(2).getCount()));
+                for (int i = 0; i < maxAmount; i++) {
+                    this.onCrafted();
+                }
+                itemStack2.setCount(maxAmount * 4);
+                this.context.run((world, pos) -> itemStack2.getItem().onCraft(itemStack2, world, player));
+                if (!this.insertItem(itemStack2, 10, 39, true)) {
+                    return ItemStack.EMPTY;
+                }
+
+                slot.onQuickTransfer(itemStack2, itemStack);
+            } else if (index >= 4 && index < 39) {
+                if (!this.insertItem(itemStack2, 1, 10, false)) {
+                    if (index < 37) {
+                        if (!this.insertItem(itemStack2, 37, 39, false)) {
+                            return ItemStack.EMPTY;
+                        }
+                    } else if (!this.insertItem(itemStack2, 10, 37, false)) {
+                        return ItemStack.EMPTY;
+                    }
+                }
+            } else if (!this.insertItem(itemStack2, 10, 39, false)) {
+                return ItemStack.EMPTY;
+            }
+
+            if (itemStack2.isEmpty()) {
+                slot.setStack(ItemStack.EMPTY);
+            } else {
+                slot.markDirty();
+            }
+
+            if (itemStack2.getCount() == itemStack.getCount()) {
+                return ItemStack.EMPTY;
+            }
+
+            slot.onTakeItem(player, itemStack2);
+            if (index == 0) {
+                player.dropItem(itemStack2, false);
+            }
+        }
+
+        return itemStack;
     }
 
     @Override

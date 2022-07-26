@@ -4,12 +4,15 @@
   "package": "hu.bendi.betterarchery.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "FletchingTableBlockMixin",
     "ArrowEntityMixin",
+    "ArrowItemMixin",
     "BowItemMixin",
-    "ArrowItemMixin"
+    "FletchingTableBlockMixin",
+    "RecipeManagerMixin",
+    "StriderEntityMixin"
   ],
   "client": [
+    "StriderEntityRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

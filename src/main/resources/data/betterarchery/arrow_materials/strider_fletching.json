@@ -1,0 +1,9 @@
+{
+  "part": "TAIL",
+  "item": "betterarchery:strider_fletching",
+  "attributes": {
+    "damage": 0.0,
+    "speed": 0.2,
+    "accuracy": 0.8
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "part": "TAIL",
+  "item": "minecraft:torch",
+  "attributes": {
+    "damage": 0.0,
+    "speed": 0.0,
+    "accuracy": 0.0
+  }
+}

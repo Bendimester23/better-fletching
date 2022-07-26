@@ -1,0 +1,9 @@
+{
+  "part": "BODY",
+  "item": "betterarchery:bone_stick",
+  "attributes": {
+    "damage": 0.3,
+    "speed": 0.9,
+    "accuracy": 0.15
+  }
+}

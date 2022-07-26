@@ -6,11 +6,8 @@ import net.minecraft.screen.slot.Slot;
 
 public class FletchingOutputSlot extends Slot {
 
-    private Runnable callback;
-
-    public FletchingOutputSlot(Inventory inventory, int index, int x, int y, Runnable callback) {
+    public FletchingOutputSlot(Inventory inventory, int index, int x, int y) {
         super(inventory, index, x, y);
-        this.callback = callback;
     }
     
     @Override
@@ -20,7 +17,6 @@ public class FletchingOutputSlot extends Slot {
 
     @Override
     public ItemStack takeStack(int amount) {
-        callback.run();
         return super.takeStack(amount);
     }
 }
