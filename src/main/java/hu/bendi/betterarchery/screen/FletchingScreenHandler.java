@@ -3,8 +3,7 @@ package hu.bendi.betterarchery.screen;
 import hu.bendi.betterarchery.ArcheryMod;
 import hu.bendi.betterarchery.arrows.ArrowAttribute;
 import hu.bendi.betterarchery.arrows.ArrowMaterialRegistry;
-import hu.bendi.betterarchery.client.gui.FletchingInputSlot;
-import hu.bendi.betterarchery.client.gui.FletchingOutputSlot;
+import hu.bendi.betterarchery.block.ModBlocks;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.CraftingResultInventory;
@@ -13,9 +12,9 @@ import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerContext;
-import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -25,19 +24,19 @@ public class FletchingScreenHandler extends ScreenHandler {
     private final CraftingResultInventory output = new CraftingResultInventory();
     private final ServerPlayerEntity player;
     private final ScreenHandlerContext context;
+    public boolean hasSpectralUpgrade = false;
+    public short glowStoneLevel = 0;
 
-    protected FletchingScreenHandler(ScreenHandlerType<?> type, int syncId) {
-        super(type, syncId);
-        this.player = null;
-        this.context = null;
-    }
-
-    public FletchingScreenHandler(int syncId, PlayerInventory inventory) {
-        this(syncId, inventory, ScreenHandlerContext.EMPTY, null);
+    public FletchingScreenHandler(int syncId, PlayerInventory playerInventory, PacketByteBuf buf) {
+        this(syncId, playerInventory, ScreenHandlerContext.EMPTY, null);
+        hasSpectralUpgrade = buf.readBoolean();
+        glowStoneLevel = buf.readShort();
+        if (hasSpectralUpgrade) addSpectralSlots(true);
     }
 
     public FletchingScreenHandler(int syncId, PlayerInventory inventory, ScreenHandlerContext context, ServerPlayerEntity player) {
         super(ArcheryMod.FLETCHING_SCREEN_HANDLER, syncId);
+        ArcheryMod.LOGGER.info("Only this should run");
         this.player = player;
         //Output slot
         this.addSlot(new FletchingOutputSlot(output, 0, 80, 45));
@@ -57,7 +56,37 @@ public class FletchingScreenHandler extends ScreenHandler {
         for (int i = 0; i < 9; ++i) {
             this.addSlot(new Slot(inventory, i, 8 + i * 18, 164));
         }
+
+        if (player != null) {
+            context.run((w, p) -> {
+                var be3 = w.getBlockEntity(p, ModBlocks.FLETCHING_TABLE_BLOCK_ENTITY);
+                if (be3.isEmpty()) return;
+                if (!be3.get().hasSpectralUpgrade) return;
+                addSpectralSlots(false);
+            });
+        }
+
+        context.run((world, blockPos) -> {
+            var be = world.getBlockEntity(blockPos, ModBlocks.FLETCHING_TABLE_BLOCK_ENTITY);
+            if (be.isEmpty()) return;
+            glowStoneLevel = be.get().glowstone_level;
+        });
+
         this.context = context;
+    }
+
+    private void addSpectralSlots(boolean isClient) {
+        this.addSlot(new GlowstoneInputSlot(-43, 10, () -> 256 - glowStoneLevel, integer -> {
+            glowStoneLevel += integer;
+            if (isClient) return;
+            context.run((world, blockPos) -> {
+                var be = world.getBlockEntity(blockPos, ModBlocks.FLETCHING_TABLE_BLOCK_ENTITY);
+                if (be.isEmpty()) return;
+                var be2 = be.get();
+                be2.glowstone_level += integer;
+                be2.markDirty();
+            });
+        }));
     }
 
     @Override
@@ -127,7 +156,7 @@ public class FletchingScreenHandler extends ScreenHandler {
                     this.onCrafted();
                 }
                 itemStack2.setCount(maxAmount * 4);
-                this.context.run((world, pos) -> itemStack2.getItem().onCraft(itemStack2, world, player));
+                itemStack2.getItem().onCraft(itemStack2, player.world, player);
                 if (!this.insertItem(itemStack2, 10, 39, true)) {
                     return ItemStack.EMPTY;
                 }

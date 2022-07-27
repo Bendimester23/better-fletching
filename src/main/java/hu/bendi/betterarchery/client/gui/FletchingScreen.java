@@ -32,15 +32,24 @@ public class FletchingScreen extends HandledScreen<FletchingScreenHandler> {
         int i = this.x;
         int j = this.y;
         this.drawTexture(matrices, i, j, 0, 0, this.backgroundWidth, this.backgroundHeight);
-        if (handler.input.getStack(0).isEmpty()) this.drawTexture(matrices, i+21, j+25, 240, 16, 16, 16);
-        if (handler.input.getStack(1).isEmpty()) this.drawTexture(matrices, i+21, j+46, 240, 32, 16, 16);
-        if (handler.input.getStack(2).isEmpty()) this.drawTexture(matrices, i+21, j+67, 240, 48, 16, 16);
+        if (handler.input.getStack(0).isEmpty()) this.drawTexture(matrices, i + 21, j + 25, 240, 16, 16, 16);
+        if (handler.input.getStack(1).isEmpty()) this.drawTexture(matrices, i + 21, j + 46, 240, 32, 16, 16);
+        if (handler.input.getStack(2).isEmpty()) this.drawTexture(matrices, i + 21, j + 67, 240, 48, 16, 16);
+        if (getScreenHandler().hasSpectralUpgrade) {
+            this.drawTexture(matrices, x - 53, y, 0, 188, 58, 57);
+            float glowStoneLevel = getScreenHandler().glowStoneLevel;
+            int startY = (int) (glowStoneLevel / 256.0f * 43.0f);
+            this.drawTexture(matrices, x - 19, y + 7 + (43 - startY), 249, 213, 7, startY);
+        }
+
     }
 
     @Override
     public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
         super.render(matrices, mouseX, mouseY, delta);
         this.drawMouseoverTooltip(matrices, mouseX, mouseY);
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderTexture(0, TEXTURE);
     }
 
     @Override

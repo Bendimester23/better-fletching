@@ -4,6 +4,8 @@
   "item.betterarchery.strider_hair": "Strider Hair",
   "item.betterarchery.strider_fletching": "Strider Fletching",
   "item.betterarchery.bone_stick": "Bone Stick",
+  "item.betterarchery.spectral_upgrade": "Spectral Upgrade",
+  "itemGroup.betterarchery.main": "Better Archery",
   "tooltip.arrow.parts": "Parts:",
   "tooltip.arrow.damage": "Damage: ",
   "tooltip.arrow.speed": "Speed: ",

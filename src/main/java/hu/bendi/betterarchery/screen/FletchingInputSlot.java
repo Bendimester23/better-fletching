@@ -1,4 +1,4 @@
-package hu.bendi.betterarchery.client.gui;
+package hu.bendi.betterarchery.screen;
 
 import hu.bendi.betterarchery.arrows.ArrowMaterialRegistry;
 import net.minecraft.inventory.Inventory;
@@ -27,7 +27,7 @@ public class FletchingInputSlot extends Slot {
         }
     }
 
-    public static enum ArrowPart {
+    public enum ArrowPart {
         HEAD,
         BODY,
         TAIL

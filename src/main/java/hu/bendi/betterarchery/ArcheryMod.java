@@ -1,10 +1,16 @@
 package hu.bendi.betterarchery;
 
 import hu.bendi.betterarchery.arrows.ArrowMaterialRegistry;
+import hu.bendi.betterarchery.block.ModBlocks;
 import hu.bendi.betterarchery.item.ModItems;
 import hu.bendi.betterarchery.screen.FletchingScreenHandler;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.client.itemgroup.FabricItemGroupBuilder;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
+import net.minecraft.item.ItemGroup;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.resource.ResourceType;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.util.Identifier;
@@ -20,8 +26,13 @@ public class ArcheryMod implements ModInitializer {
 	//Content stuff
 	public static final ScreenHandlerType<FletchingScreenHandler> FLETCHING_SCREEN_HANDLER;
 
+	public static final ItemGroup ARCHERY_TAB = FabricItemGroupBuilder.build(
+			i("main"),
+			() -> new ItemStack(Items.ARROW)
+	);
+
 	static {
-		FLETCHING_SCREEN_HANDLER = new ScreenHandlerType<>(FletchingScreenHandler::new);
+		FLETCHING_SCREEN_HANDLER = new ExtendedScreenHandlerType<>(FletchingScreenHandler::new);
 		ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(ARROW_MATERIAL_REGISTRY);
 	}
 
@@ -30,6 +41,9 @@ public class ArcheryMod implements ModInitializer {
 		LOGGER.info("Making Minecraft Archery better since 2022!");
 
 		Registry.register(Registry.SCREEN_HANDLER, i("fletching_screen"), FLETCHING_SCREEN_HANDLER);
+
+		ModBlocks.registerBlocks();
+		ModBlocks.registerBlockEntities();
 
 		ModItems.register();
 	}

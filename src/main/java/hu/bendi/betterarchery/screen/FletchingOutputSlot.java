@@ -1,4 +1,4 @@
-package hu.bendi.betterarchery.client.gui;
+package hu.bendi.betterarchery.screen;
 
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
