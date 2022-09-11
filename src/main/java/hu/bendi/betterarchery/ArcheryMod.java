@@ -3,6 +3,7 @@ package hu.bendi.betterarchery;
 import hu.bendi.betterarchery.arrows.ArrowMaterialRegistry;
 import hu.bendi.betterarchery.block.ModBlocks;
 import hu.bendi.betterarchery.item.ModItems;
+import hu.bendi.betterarchery.network.ModNetworking;
 import hu.bendi.betterarchery.screen.FletchingScreenHandler;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.itemgroup.FabricItemGroupBuilder;
@@ -41,6 +42,8 @@ public class ArcheryMod implements ModInitializer {
 		LOGGER.info("Making Minecraft Archery better since 2022!");
 
 		Registry.register(Registry.SCREEN_HANDLER, i("fletching_screen"), FLETCHING_SCREEN_HANDLER);
+
+		ModNetworking.register();
 
 		ModBlocks.registerBlocks();
 		ModBlocks.registerBlockEntities();

@@ -24,6 +24,7 @@ public class FletchingTableBlockEntity extends BlockEntity implements ExtendedSc
     public boolean hasTippedUpgrade = false;
 
     public short glowstone_level = 0;
+    public byte selected_type = 0;
 
     public FletchingTableBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlocks.FLETCHING_TABLE_BLOCK_ENTITY, pos, state);
@@ -39,6 +40,7 @@ public class FletchingTableBlockEntity extends BlockEntity implements ExtendedSc
 
         nbt.putByte("Upgrades", upgrades);
         nbt.putShort("GlowstoneLevel", glowstone_level);
+        nbt.putByte("SelectedType", selected_type);
     }
 
     @Override
@@ -50,12 +52,15 @@ public class FletchingTableBlockEntity extends BlockEntity implements ExtendedSc
         hasTippedUpgrade = ((upgrades >> 1) & 1) == 1;
 
         glowstone_level = nbt.getShort("GlowstoneLevel");
+        selected_type = nbt.getByte("SelectedType");
     }
 
     @Override
     public void writeScreenOpeningData(ServerPlayerEntity player, PacketByteBuf buf) {
         buf.writeBoolean(hasSpectralUpgrade);
+        buf.writeBoolean(hasTippedUpgrade);
         buf.writeShort(glowstone_level);
+        buf.writeByte(selected_type);
     }
 
     @Override

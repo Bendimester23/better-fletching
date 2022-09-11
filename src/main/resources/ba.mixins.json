@@ -9,6 +9,7 @@
     "BowItemMixin",
     "FletchingTableBlockMixin",
     "RecipeManagerMixin",
+    "SpectralArrowEntityMixin",
     "StriderEntityMixin"
   ],
   "client": [

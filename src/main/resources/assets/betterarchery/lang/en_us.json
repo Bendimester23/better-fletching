@@ -11,5 +11,6 @@
   "tooltip.arrow.speed": "Speed: ",
   "tooltip.arrow.range": "Range: ",
   "tooltip.arrow.accuracy": "Accuracy: ",
-  "tooltip.arrow.sneak": "<Press Shift>"
+  "tooltip.arrow.sneak": "<Press Shift>",
+  "tooltip.glowstone_level": "Glowstone Level: "
 }

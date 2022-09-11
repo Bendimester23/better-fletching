@@ -3,7 +3,12 @@ package hu.bendi.betterarchery.screen;
 import hu.bendi.betterarchery.ArcheryMod;
 import hu.bendi.betterarchery.arrows.ArrowAttribute;
 import hu.bendi.betterarchery.arrows.ArrowMaterialRegistry;
+import hu.bendi.betterarchery.block.FletchingTableBlockEntity;
 import hu.bendi.betterarchery.block.ModBlocks;
+import hu.bendi.betterarchery.network.ModNetworking;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.CraftingResultInventory;
@@ -25,18 +30,21 @@ public class FletchingScreenHandler extends ScreenHandler {
     private final ServerPlayerEntity player;
     private final ScreenHandlerContext context;
     public boolean hasSpectralUpgrade = false;
+    public boolean hasTippedUpgrade = false;
     public short glowStoneLevel = 0;
+    private byte selectedType = 0;
 
     public FletchingScreenHandler(int syncId, PlayerInventory playerInventory, PacketByteBuf buf) {
         this(syncId, playerInventory, ScreenHandlerContext.EMPTY, null);
         hasSpectralUpgrade = buf.readBoolean();
+        hasTippedUpgrade = buf.readBoolean();
         glowStoneLevel = buf.readShort();
+        selectedType = buf.readByte();
         if (hasSpectralUpgrade) addSpectralSlots(true);
     }
 
     public FletchingScreenHandler(int syncId, PlayerInventory inventory, ScreenHandlerContext context, ServerPlayerEntity player) {
         super(ArcheryMod.FLETCHING_SCREEN_HANDLER, syncId);
-        ArcheryMod.LOGGER.info("Only this should run");
         this.player = player;
         //Output slot
         this.addSlot(new FletchingOutputSlot(output, 0, 80, 45));
@@ -66,11 +74,12 @@ public class FletchingScreenHandler extends ScreenHandler {
             });
         }
 
-        context.run((world, blockPos) -> {
-            var be = world.getBlockEntity(blockPos, ModBlocks.FLETCHING_TABLE_BLOCK_ENTITY);
-            if (be.isEmpty()) return;
-            glowStoneLevel = be.get().glowstone_level;
-        });
+        context.run((world, blockPos) -> world.getBlockEntity(blockPos, ModBlocks.FLETCHING_TABLE_BLOCK_ENTITY).ifPresent(be -> {
+            glowStoneLevel = be.glowstone_level;
+            selectedType = be.selected_type;
+            hasSpectralUpgrade = be.hasSpectralUpgrade;
+            hasTippedUpgrade = be.hasTippedUpgrade;
+        }));
 
         this.context = context;
     }
@@ -79,13 +88,11 @@ public class FletchingScreenHandler extends ScreenHandler {
         this.addSlot(new GlowstoneInputSlot(-43, 10, () -> 256 - glowStoneLevel, integer -> {
             glowStoneLevel += integer;
             if (isClient) return;
-            context.run((world, blockPos) -> {
-                var be = world.getBlockEntity(blockPos, ModBlocks.FLETCHING_TABLE_BLOCK_ENTITY);
-                if (be.isEmpty()) return;
-                var be2 = be.get();
-                be2.glowstone_level += integer;
-                be2.markDirty();
-            });
+            context.run((world, blockPos) -> world.getBlockEntity(blockPos, ModBlocks.FLETCHING_TABLE_BLOCK_ENTITY).ifPresent(be -> {
+                be.glowstone_level += integer;
+                glowStoneLevel = be.glowstone_level;
+                be.markDirty();
+            }));
         }));
     }
 
@@ -99,10 +106,46 @@ public class FletchingScreenHandler extends ScreenHandler {
         return slot.inventory != output;
     }
 
+    public void clientClickType(byte clicked) {
+        var buf = PacketByteBufs.create();
+        buf.writeInt(syncId);
+        buf.writeByte(clicked);
+        ClientPlayNetworking.send(ModNetworking.FLETCHING_SET_TYPE_PACKET, buf);
+    }
+
+    public byte getSelectedType() {
+        return selectedType;
+    }
+
+    public void setSelectedType(byte to) {
+        if (to == 1 && !this.hasSpectralUpgrade) {
+            ArcheryMod.LOGGER.info("WTF");
+            return;
+        }
+        if (to == 2 && !this.hasTippedUpgrade) return;
+
+        this.selectedType = to;
+        this.context.run((world, blockPos) -> {
+            var be2 = world.getChunk(blockPos).getBlockEntity(blockPos);
+            if (!(be2 instanceof FletchingTableBlockEntity be)) return;
+
+            be.selected_type = to;
+            be.markDirty();
+            var buf = PacketByteBufs.create();
+            buf.writeInt(syncId);
+            buf.writeByte(to);
+
+            ServerPlayNetworking.send(player, ModNetworking.FLETCHING_SET_TYPE_PACKET, buf);
+            updateResult();
+        });
+        updateResult();
+    }
+
     public void onCrafted() {
         input.removeStack(0, 1);
         input.removeStack(1, 1);
         input.removeStack(2, 1);
+        glowStoneLevel -= 1;
     }
 
     public void updateResult() {
@@ -110,13 +153,19 @@ public class FletchingScreenHandler extends ScreenHandler {
             setResult(ItemStack.EMPTY);
             return;
         }
+
+        if (selectedType == 1 && glowStoneLevel < 1) {
+            setResult(ItemStack.EMPTY);
+            return;
+        }
+
         var result = ArrowAttribute.Builder.create()
                 .appendAttributes(ArrowMaterialRegistry.getHeadMaterial(input.getStack(0).getItem()))
                 .appendAttributes(ArrowMaterialRegistry.getBodyMaterial(input.getStack(1).getItem()))
                 .appendAttributes(ArrowMaterialRegistry.getTailMaterial(input.getStack(2).getItem()))
                 .build();
 
-        var stack = new ItemStack(Items.ARROW);
+        var stack = new ItemStack(selectedType == 0 ? Items.ARROW : Items.SPECTRAL_ARROW);
 
         stack.setSubNbt("ArrowData", result.toNbt());
         var tag = new NbtCompound();
@@ -139,7 +188,7 @@ public class FletchingScreenHandler extends ScreenHandler {
     @Override
     public void onSlotClick(int slotIndex, int button, SlotActionType actionType, PlayerEntity player) {
         super.onSlotClick(slotIndex, button, actionType, player);
-        if (slotIndex == 0 && actionType == SlotActionType.PICKUP) onCrafted();
+        if (slotIndex == 0 && actionType == SlotActionType.PICKUP && !output.isEmpty()) onCrafted();
         updateResult();
     }
 
@@ -199,5 +248,13 @@ public class FletchingScreenHandler extends ScreenHandler {
     public void onContentChanged(Inventory inventory) {
         super.onContentChanged(inventory);
         updateResult();
+    }
+
+    public ServerPlayerEntity getPlayer() {
+        return player;
+    }
+
+    public short getGlowStoneLevel() {
+        return glowStoneLevel;
     }
 }
