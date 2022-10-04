@@ -8,14 +8,16 @@ import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.PersistentProjectileEntity;
-import net.minecraft.entity.projectile.PersistentProjectileEntity.PickupPermission;
-import net.minecraft.item.*;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.stat.Stats;
+import net.minecraft.item.ArrowItem;
+import net.minecraft.item.BowItem;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.RangedWeaponItem;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.Objects;
 
@@ -28,11 +30,29 @@ public abstract class BowItemMixin extends RangedWeaponItem {
 
    private static final float ACCURACY_OVERRIDE = 15;
 
-   /**
-    * @author Bendi
-    * @reason Apply attributes to {@link net.minecraft.entity.projectile.ArrowEntity}
-    */
-   @Overwrite
+   @Inject(method = "onStoppedUsing", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;spawnEntity(Lnet/minecraft/entity/Entity;)Z", shift = At.Shift.BEFORE), cancellable = true)
+   private void appendStats(ItemStack stack, World world, LivingEntity user, int remainingUseTicks, CallbackInfo ci, PlayerEntity playerEntity, boolean bl, ItemStack itemStack, int i, float f, boolean bl2, ArrowItem arrowItem, PersistentProjectileEntity persistentProjectileEntity) {
+      ArrowAttribute attribute = itemStack.getSubNbt("ArrowData") != null ? ArrowAttribute.fromNbt(Objects.requireNonNull(itemStack.getSubNbt("ArrowData"))) : ArrowAttribute.DEFAULT;
+
+      if (persistentProjectileEntity instanceof StatsHolder) {
+
+         ((StatsHolder) persistentProjectileEntity).setStats(attribute);
+
+         if (itemStack.getSubNbt("Parts") != null) {
+            ((PartsHolder) persistentProjectileEntity).setParts(PartsHolder.Parts.fromNbt(Objects.requireNonNull(itemStack.getSubNbt("Parts"))));
+         }
+      }
+      float pitchOffset = (float) (Math.random() * (1.0 - attribute.getAccuracy()) * ACCURACY_OVERRIDE) * (Math.random() > 0.5 ? -1 : 0);
+      float yawOffset = (float) (Math.random() * (1.0 - attribute.getAccuracy()) * ACCURACY_OVERRIDE) * (Math.random() > 0.5 ? -1 : 0);
+
+      persistentProjectileEntity.setVelocity(playerEntity, playerEntity.getPitch() + pitchOffset, playerEntity.getYaw() + yawOffset, 0.0F, f * 3.0F * attribute.getSpeed(), 1.0F);
+
+      int j = EnchantmentHelper.getLevel(Enchantments.POWER, stack);
+      if (j > 0) {
+         persistentProjectileEntity.setDamage(persistentProjectileEntity.getDamage() + (double) j * 0.5D + 0.5D + attribute.getDamage());
+      }
+   }
+/*
    public void onStoppedUsing(ItemStack stack, World world, LivingEntity user, int remainingUseTicks) {
       if (user instanceof PlayerEntity playerEntity) {
          boolean bl = playerEntity.getAbilities().creativeMode || EnchantmentHelper.getLevel(Enchantments.INFINITY, stack) > 0;
@@ -103,5 +123,5 @@ public abstract class BowItemMixin extends RangedWeaponItem {
               }
            }
         }
-     }
+     }*/
 }
