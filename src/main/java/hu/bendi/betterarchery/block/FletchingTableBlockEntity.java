@@ -12,13 +12,12 @@ import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerContext;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
 
 public class FletchingTableBlockEntity extends BlockEntity implements ExtendedScreenHandlerFactory {
 
-    private static final Text TITLE = new TranslatableText("container.fletching_table");
+    private static final Text TITLE = Text.translatable("container.fletching_table");
 
     public boolean hasSpectralUpgrade = false;
     public boolean hasTippedUpgrade = false;

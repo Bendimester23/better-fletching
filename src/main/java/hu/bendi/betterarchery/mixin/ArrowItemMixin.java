@@ -7,10 +7,8 @@ import net.minecraft.client.item.TooltipContext;
 import net.minecraft.item.ArrowItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 import net.minecraft.world.World;
 import org.lwjgl.glfw.GLFW;
@@ -34,20 +32,20 @@ public abstract class ArrowItemMixin extends Item {
             if (stack.getSubNbt("ArrowData") != null) {
                 var attr = ArrowAttribute.fromNbt(stack.getSubNbt("ArrowData"));
 
-                tooltip.add(new TranslatableText("tooltip.arrow.damage").append(attr.getDamage() + ""));
-                tooltip.add(new TranslatableText("tooltip.arrow.speed").append(attr.getSpeed() + ""));
-                tooltip.add(new TranslatableText("tooltip.arrow.accuracy").append(attr.getAccuracy() + ""));
+                tooltip.add(Text.translatable("tooltip.arrow.damage").append(String.valueOf(attr.getDamage())));
+                tooltip.add(Text.translatable("tooltip.arrow.speed").append(String.valueOf(attr.getSpeed())));
+                tooltip.add(Text.translatable("tooltip.arrow.accuracy").append(String.valueOf(attr.getAccuracy())));
             }
 
             if (stack.getSubNbt("Parts") == null) return;
             var parts = PartsHolder.Parts.fromNbt(stack.getSubNbt("Parts"));
-            tooltip.add(new LiteralText(""));
-            tooltip.add(new TranslatableText("tooltip.arrow.parts"));
-            tooltip.add(new LiteralText(" - ").append(new TranslatableText(parts.head).formatted(Formatting.GRAY)));
-            tooltip.add(new LiteralText(" - ").append(new TranslatableText(parts.body).formatted(Formatting.GRAY)));
-            tooltip.add(new LiteralText(" - ").append(new TranslatableText(parts.tail).formatted(Formatting.GRAY)));
+            tooltip.add(Text.literal(""));
+            tooltip.add(Text.translatable("tooltip.arrow.parts"));
+            tooltip.add(Text.literal(" - ").append(Text.translatable(parts.head).formatted(Formatting.GRAY)));
+            tooltip.add(Text.literal(" - ").append(Text.translatable(parts.body).formatted(Formatting.GRAY)));
+            tooltip.add(Text.literal(" - ").append(Text.translatable(parts.tail).formatted(Formatting.GRAY)));
         } else {
-            tooltip.add(new TranslatableText("tooltip.arrow.sneak").fillStyle(Style.EMPTY.withBold(true)));
+            tooltip.add(Text.translatable("tooltip.arrow.sneak").fillStyle(Style.EMPTY.withBold(true)));
         }
     }
 }
