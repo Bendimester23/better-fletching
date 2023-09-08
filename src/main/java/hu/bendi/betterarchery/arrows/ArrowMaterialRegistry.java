@@ -44,8 +44,8 @@ public class ArrowMaterialRegistry implements SimpleSynchronousResourceReloadLis
         }
         materials = builder.build();
 
-        for (Identifier id : manager.findResources("arrow_materials", path -> path.endsWith(".json"))) {
-            try (InputStream stream = manager.getResource(id).getInputStream()) {
+        for (Identifier id : manager.findResources("arrow_materials", path -> path.getPath().endsWith(".json")).keySet()) {
+            try (InputStream stream = manager.getResource(id).get().getInputStream()) {
                 var material = GSON.fromJson(new String(stream.readAllBytes()), ArrowMaterial.class);
                 materials.get(material.getPart()).put(Registry.ITEM.get(Identifier.tryParse(material.getItem())), material.getAttributes());
             } catch (Exception e) {

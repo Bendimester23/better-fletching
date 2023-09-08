@@ -12,7 +12,10 @@ import java.util.Objects;
 @Mixin(RecipeManager.class)
 public abstract class RecipeManagerMixin {
 
-    @Redirect(method = "apply(Ljava/util/Map;Lnet/minecraft/resource/ResourceManager;Lnet/minecraft/util/profiler/Profiler;)V", at = @At(value = "INVOKE", target = "Lcom/google/common/collect/ImmutableMap$Builder;put(Ljava/lang/Object;Ljava/lang/Object;)Lcom/google/common/collect/ImmutableMap$Builder;"))
+    @Redirect(
+            method = "apply(Ljava/util/Map;Lnet/minecraft/resource/ResourceManager;Lnet/minecraft/util/profiler/Profiler;)V",
+                at = @At(value = "INVOKE", target = "Lcom/google/common/collect/ImmutableMap$Builder;put(Ljava/lang/Object;Ljava/lang/Object;)Lcom/google/common/collect/ImmutableMap$Builder;")
+    )
     public <K, V> ImmutableMap.Builder<K, V> deleteArrowRecipes(ImmutableMap.Builder<K, V> instance, K key, V value) {
         var i = (Identifier) key;
         if (Objects.equals(i.getNamespace(), "minecraft")) {

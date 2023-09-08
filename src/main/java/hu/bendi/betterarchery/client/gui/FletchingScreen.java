@@ -11,9 +11,7 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 
@@ -60,8 +58,8 @@ public class FletchingScreen extends HandledScreen<FletchingScreenHandler> {
         if (getScreenHandler().hasSpectralUpgrade) {
             if (mouseX > x - 19 && mouseX < x - 11 && mouseY > y + 7 && mouseY < y + 50) {
                 renderTooltip(matrices,
-                        new TranslatableText("tooltip.glowstone_level")
-                                .append(new LiteralText(getScreenHandler().getGlowStoneLevel() + "/256").formatted(Formatting.GRAY)
+                        Text.translatable("tooltip.glowstone_level")
+                                .append(Text.literal(getScreenHandler().getGlowStoneLevel() + "/256").formatted(Formatting.GRAY)
                                 ), mouseX, mouseY);
             }
         }
